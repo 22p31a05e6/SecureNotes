@@ -1,5 +1,6 @@
 package com.nearbuy.SecureNotes.service;
 
+import com.nearbuy.SecureNotes.dto.RegisterRequest;
 import com.nearbuy.SecureNotes.entity.User;
 import com.nearbuy.SecureNotes.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,14 +18,19 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User createUser(User user) {
+    public User createUser(RegisterRequest request) {
 
-        if (userRepository.existsByEmail(user.getEmail())) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
+        User user = new User();
+
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+
         user.setPassword(
-                passwordEncoder.encode(user.getPassword())
+                passwordEncoder.encode(request.getPassword())
         );
 
         return userRepository.save(user);
