@@ -1,7 +1,9 @@
 package com.nearbuy.SecureNotes.controller;
 
+import com.nearbuy.SecureNotes.dto.RegisterRequest;
 import com.nearbuy.SecureNotes.entity.User;
 import com.nearbuy.SecureNotes.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,9 +18,10 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<User> createUser(
+            @Valid @RequestBody RegisterRequest request) {
 
-        User savedUser = userService.createUser(user);
+        User savedUser = userService.createUser(request);
 
         return ResponseEntity.ok(savedUser);
     }
