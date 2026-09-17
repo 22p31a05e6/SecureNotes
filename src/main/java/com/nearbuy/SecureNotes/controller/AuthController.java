@@ -1,6 +1,7 @@
 package com.nearbuy.SecureNotes.controller;
 
 import com.nearbuy.SecureNotes.dto.LoginRequest;
+import com.nearbuy.SecureNotes.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,9 +13,13 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    public AuthController(AuthenticationManager authenticationManager) {
+    public AuthController(AuthenticationManager authenticationManager,
+                          JwtService jwtService) {
+
         this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/login")
@@ -28,6 +33,8 @@ public class AuthController {
                         )
                 );
 
-        return "Login successful";
+        return jwtService.generateToken(
+                authentication.getName()
+        );
     }
 }

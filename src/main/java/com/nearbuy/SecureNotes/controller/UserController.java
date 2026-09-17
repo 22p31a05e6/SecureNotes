@@ -5,6 +5,7 @@ import com.nearbuy.SecureNotes.entity.User;
 import com.nearbuy.SecureNotes.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.nearbuy.SecureNotes.dto.UserResponse;
 
@@ -31,5 +32,10 @@ public class UserController {
         );
 
         return ResponseEntity.ok(response);
+    }
+    @GetMapping("/profile")
+    public String profile(Authentication authentication) {
+
+        return "Hello " + authentication.getName();
     }
 }
