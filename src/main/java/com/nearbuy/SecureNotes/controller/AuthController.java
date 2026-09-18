@@ -6,6 +6,8 @@ import com.nearbuy.SecureNotes.dto.RefreshTokenRequest;
 import com.nearbuy.SecureNotes.entity.RefreshToken;
 import com.nearbuy.SecureNotes.security.JwtService;
 import com.nearbuy.SecureNotes.service.RefreshTokenService;
+import com.nearbuy.SecureNotes.dto.RefreshTokenRequest;
+import com.nearbuy.SecureNotes.service.RefreshTokenService;
 
 import jakarta.validation.Valid;
 
@@ -61,21 +63,30 @@ public class AuthController {
     public AuthResponse refresh(
             @RequestBody RefreshTokenRequest request) {
 
-        RefreshToken refreshToken =
-                refreshTokenService.findByToken(
+        RefreshToken newRefreshToken =
+                refreshTokenService.rotateRefreshToken(
                         request.getRefreshToken()
                 );
 
-        refreshTokenService.verifyExpiration(refreshToken);
-
         String accessToken =
                 jwtService.generateToken(
-                        refreshToken.getUserEmail()
+                        newRefreshToken.getUserEmail()
                 );
 
         return new AuthResponse(
                 accessToken,
-                refreshToken.getToken()
+                newRefreshToken.getToken()
         );
+    }
+
+    @PostMapping("/logout")
+    public String logout(
+            @RequestBody RefreshTokenRequest request) {
+
+        refreshTokenService.deleteByToken(
+                request.getRefreshToken()
+        );
+
+        return "Logged out successfully";
     }
 }
