@@ -32,6 +32,7 @@ public class UserService {
         user.setPassword(
                 passwordEncoder.encode(request.getPassword())
         );
+        user.setProvider("LOCAL");
 
         return userRepository.save(user);
     }
