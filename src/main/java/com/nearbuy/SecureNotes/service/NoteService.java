@@ -2,6 +2,8 @@ package com.nearbuy.SecureNotes.service;
 
 import com.nearbuy.SecureNotes.document.Note;
 import com.nearbuy.SecureNotes.dto.NoteRequest;
+import com.nearbuy.SecureNotes.exception.ResourceNotFoundException;
+import com.nearbuy.SecureNotes.exception.UnauthorizedActionException;
 import com.nearbuy.SecureNotes.repository.NoteRepository;
 import org.springframework.stereotype.Service;
 
@@ -39,11 +41,12 @@ public class NoteService {
 
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() ->
-                        new RuntimeException("Note not found"));
+                        new ResourceNotFoundException("Note not found"));
 
         if (!note.getUserEmail().equals(userEmail)) {
-            throw new RuntimeException(
-                    "You are not allowed to modify this note");
+            throw new UnauthorizedActionException(
+                    "You are not allowed to modify this note"
+            );
         }
 
         note.setTitle(request.getTitle());
@@ -58,11 +61,12 @@ public class NoteService {
 
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() ->
-                        new RuntimeException("Note not found"));
+                        new ResourceNotFoundException("Note not found"));
 
         if (!note.getUserEmail().equals(userEmail)) {
-            throw new RuntimeException(
-                    "You are not allowed to delete this note");
+            throw new UnauthorizedActionException(
+                    "You are not allowed to delete this note"
+            );
         }
 
         noteRepository.delete(note);
