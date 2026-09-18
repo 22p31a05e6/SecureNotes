@@ -1,11 +1,11 @@
 package com.nearbuy.SecureNotes.config;
 
 import com.nearbuy.SecureNotes.security.JwtAuthenticationFilter;
+import com.nearbuy.SecureNotes.security.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -13,15 +13,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 public class SecurityConfig {
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            OAuth2SuccessHandler oAuth2SuccessHandler) {
+
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -36,6 +38,10 @@ public class SecurityConfig {
                                 "/api/auth/login"
                         ).permitAll()
                         .anyRequest().authenticated()
+                )
+
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2SuccessHandler)
                 )
 
                 .addFilterBefore(
