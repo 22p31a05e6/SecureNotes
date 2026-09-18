@@ -26,6 +26,12 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found"));
 
+        if (!"LOCAL".equals(user.getProvider())) {
+            throw new UsernameNotFoundException(
+                    "This account uses Google login"
+            );
+        }
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
