@@ -42,4 +42,28 @@ public class NoteController {
                 noteService.getMyNotes(email)
         );
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Note> updateNote(
+            @PathVariable String id,
+            @Valid @RequestBody NoteRequest request,
+            Authentication authentication) {
+
+        String email = authentication.getName();
+
+        Note updatedNote =
+                noteService.updateNote(id, request, email);
+
+        return ResponseEntity.ok(updatedNote);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNote(
+            @PathVariable String id,
+            Authentication authentication) {
+
+        String email = authentication.getName();
+
+        noteService.deleteNote(id, email);
+
+        return ResponseEntity.noContent().build();
+    }
 }

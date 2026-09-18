@@ -31,4 +31,40 @@ public class NoteService {
 
         return noteRepository.findByUserEmail(userEmail);
     }
+
+    public Note updateNote(
+            String noteId,
+            NoteRequest request,
+            String userEmail) {
+
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() ->
+                        new RuntimeException("Note not found"));
+
+        if (!note.getUserEmail().equals(userEmail)) {
+            throw new RuntimeException(
+                    "You are not allowed to modify this note");
+        }
+
+        note.setTitle(request.getTitle());
+        note.setContent(request.getContent());
+
+        return noteRepository.save(note);
+    }
+
+    public void deleteNote(
+            String noteId,
+            String userEmail) {
+
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() ->
+                        new RuntimeException("Note not found"));
+
+        if (!note.getUserEmail().equals(userEmail)) {
+            throw new RuntimeException(
+                    "You are not allowed to delete this note");
+        }
+
+        noteRepository.delete(note);
+    }
 }
