@@ -8,6 +8,7 @@ import com.nearbuy.SecureNotes.security.JwtService;
 import com.nearbuy.SecureNotes.service.RefreshTokenService;
 import com.nearbuy.SecureNotes.dto.RefreshTokenRequest;
 import com.nearbuy.SecureNotes.service.RefreshTokenService;
+import com.nearbuy.SecureNotes.dto.RefreshTokenResult;
 
 import jakarta.validation.Valid;
 
@@ -51,34 +52,33 @@ public class AuthController {
         String accessToken =
                 jwtService.generateToken(email);
 
-        RefreshToken refreshToken =
+        String refreshToken =
                 refreshTokenService.createRefreshToken(email);
 
         return new AuthResponse(
                 accessToken,
-                refreshToken.getToken()
+                refreshToken
         );
     }
     @PostMapping("/refresh")
     public AuthResponse refresh(
             @RequestBody RefreshTokenRequest request) {
 
-        RefreshToken newRefreshToken =
+        RefreshTokenResult result =
                 refreshTokenService.rotateRefreshToken(
                         request.getRefreshToken()
                 );
 
         String accessToken =
                 jwtService.generateToken(
-                        newRefreshToken.getUserEmail()
+                        result.getUserEmail()
                 );
 
         return new AuthResponse(
                 accessToken,
-                newRefreshToken.getToken()
+                result.getRefreshToken()
         );
     }
-
     @PostMapping("/logout")
     public String logout(
             @RequestBody RefreshTokenRequest request) {
