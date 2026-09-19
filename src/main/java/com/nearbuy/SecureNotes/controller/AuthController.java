@@ -6,8 +6,6 @@ import com.nearbuy.SecureNotes.dto.RefreshTokenRequest;
 import com.nearbuy.SecureNotes.entity.RefreshToken;
 import com.nearbuy.SecureNotes.security.JwtService;
 import com.nearbuy.SecureNotes.service.RefreshTokenService;
-import com.nearbuy.SecureNotes.dto.RefreshTokenRequest;
-import com.nearbuy.SecureNotes.service.RefreshTokenService;
 import com.nearbuy.SecureNotes.dto.RefreshTokenResult;
 
 import jakarta.validation.Valid;

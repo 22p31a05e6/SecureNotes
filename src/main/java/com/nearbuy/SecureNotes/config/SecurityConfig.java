@@ -1,5 +1,6 @@
 package com.nearbuy.SecureNotes.config;
 
+import com.nearbuy.SecureNotes.security.JwtAuthenticationEntryPoint;
 import com.nearbuy.SecureNotes.security.JwtAuthenticationFilter;
 import com.nearbuy.SecureNotes.security.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
@@ -15,13 +16,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
+    private final JwtAuthenticationEntryPoint
+            jwtAuthenticationEntryPoint;
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            OAuth2SuccessHandler oAuth2SuccessHandler) {
+            OAuth2SuccessHandler oAuth2SuccessHandler,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
 
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.jwtAuthenticationEntryPoint =
+                jwtAuthenticationEntryPoint;
     }
 
 
@@ -31,6 +36,9 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -45,6 +53,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .successHandler(oAuth2SuccessHandler)
                 )
+
 
                 .addFilterBefore(
                         jwtAuthenticationFilter,
