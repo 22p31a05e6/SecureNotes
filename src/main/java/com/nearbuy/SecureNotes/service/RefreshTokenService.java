@@ -1,7 +1,9 @@
 package com.nearbuy.SecureNotes.service;
 
+import com.nearbuy.SecureNotes.dto.RefreshTokenResult;
 import com.nearbuy.SecureNotes.entity.RefreshToken;
 import com.nearbuy.SecureNotes.repository.RefreshTokenRepository;
+import com.nearbuy.SecureNotes.security.TokenHashUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,29 +18,43 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenSecurityService
             refreshTokenSecurityService;
+    private final TokenHashUtil tokenHashUtil;
 
     public RefreshTokenService(
             RefreshTokenRepository refreshTokenRepository,
-            RefreshTokenSecurityService refreshTokenSecurityService) {
+            RefreshTokenSecurityService refreshTokenSecurityService,
+            TokenHashUtil tokenHashUtil) {
 
         this.refreshTokenRepository = refreshTokenRepository;
         this.refreshTokenSecurityService =
                 refreshTokenSecurityService;
+        this.tokenHashUtil = tokenHashUtil;
     }
 
-    public RefreshToken createRefreshToken(String userEmail) {
+    public String createRefreshToken(String userEmail) {
 
+        // 1. Generate the raw token
+        String rawToken = UUID.randomUUID().toString();
+
+        // 2. Hash the raw token
+        String tokenHash = tokenHashUtil.hash(rawToken);
+
+        // 3. Store ONLY the hash in the database
         RefreshToken refreshToken = new RefreshToken();
 
-        refreshToken.setToken(UUID.randomUUID().toString());
-
+        refreshToken.setTokenHash(tokenHash);
         refreshToken.setUserEmail(userEmail);
 
         refreshToken.setExpiryDate(
                 Instant.now().plus(30, ChronoUnit.DAYS)
         );
 
-        return refreshTokenRepository.save(refreshToken);
+        refreshToken.setRevoked(false);
+
+        refreshTokenRepository.save(refreshToken);
+
+        // 4. Return the RAW token to the client
+        return rawToken;
     }
 
     public RefreshToken verifyExpiration(
@@ -58,26 +74,35 @@ public class RefreshTokenService {
     }
     public RefreshToken findByToken(String token) {
 
-        return refreshTokenRepository.findByToken(token)
+        String tokenHash = tokenHashUtil.hash(token);
+
+        return refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() ->
                         new RuntimeException("Refresh token not found"));
     }
     @Transactional
     public void deleteByToken(String token) {
 
-        refreshTokenRepository.deleteByToken(token);
+        String tokenHash = tokenHashUtil.hash(token);
+
+        refreshTokenRepository.deleteByTokenHash(tokenHash);
     }
 
     @Transactional
-    public RefreshToken rotateRefreshToken(String token) {
+    public RefreshTokenResult rotateRefreshToken(String token) {
 
+        // 1. Hash the raw token received from the client
+        String tokenHash = tokenHashUtil.hash(token);
+
+        // 2. Find the stored token using the hash
         RefreshToken oldToken =
-                refreshTokenRepository.findByToken(token)
+                refreshTokenRepository.findByTokenHash(tokenHash)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Refresh token not found"
                                 ));
 
+        // 3. Detect reuse
         if (oldToken.isRevoked()) {
 
             refreshTokenSecurityService.revokeAllUserTokens(
@@ -89,6 +114,7 @@ public class RefreshTokenService {
             );
         }
 
+        // 4. Check expiration
         if (oldToken.getExpiryDate()
                 .isBefore(Instant.now())) {
 
@@ -102,17 +128,20 @@ public class RefreshTokenService {
 
         String userEmail = oldToken.getUserEmail();
 
-        // Revoke the old token
+        // 5. Revoke the old refresh token
         oldToken.setRevoked(true);
         refreshTokenRepository.save(oldToken);
 
-        // Create a new refresh token
+        // 6. Generate NEW raw refresh token
+        String newRawToken = UUID.randomUUID().toString();
+
+        // 7. Hash the new token before storing
+        String newTokenHash =
+                tokenHashUtil.hash(newRawToken);
+
         RefreshToken newToken = new RefreshToken();
 
-        newToken.setToken(
-                UUID.randomUUID().toString()
-        );
-
+        newToken.setTokenHash(newTokenHash);
         newToken.setUserEmail(userEmail);
 
         newToken.setExpiryDate(
@@ -121,7 +150,13 @@ public class RefreshTokenService {
 
         newToken.setRevoked(false);
 
-        return refreshTokenRepository.save(newToken);
+        refreshTokenRepository.save(newToken);
+
+        // 8. Return email + RAW token
+        return new RefreshTokenResult(
+                userEmail,
+                newRawToken
+        );
     }
     @Transactional
     public void revokeAllUserTokens(String userEmail) {
